@@ -6,38 +6,20 @@ app.use(express.json());
 
 const YAMPI_ALIAS = process.env.YAMPI_ALIAS;
 const YAMPI_TOKEN = process.env.YAMPI_TOKEN;
+const YAMPI_SECRET = process.env.YAMPI_SECRET;
 
 app.post("/webhook", async (req, res) => {
   console.log("📦 Webhook recebido:", JSON.stringify(req.body, null, 2));
 
   const event = req.body.event;
   const quantity = req.body.resource?.quantity;
-  const stockId = req.body.resource?.stock_id;
+  const productId = req.body.resource?.id;
 
-  if (event === "product.inventory.updated" && stockId) {
+  if (event === "product.inventory.updated" && productId) {
     try {
-      // 1️⃣ Buscar produto pelo estoque
-      const stockResponse = await fetch(
-        `https://${YAMPI_ALIAS}.yampi.com.br/api/v2/stocks/${stockId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${YAMPI_TOKEN}`,
-          },
-        }
-      );
-      const stockData = await stockResponse.json();
-      const productId = stockData?.data?.product?.id;
-
-      if (!productId) {
-        console.error("❌ Não foi possível encontrar o produto para o estoque:", stockId);
-        return res.status(400).send("Produto não encontrado");
-      }
-
-      // 2️⃣ Definir novo status
       const status = quantity > 0 ? "active" : "inactive";
 
-      // 3️⃣ Atualizar produto
-      const updateResponse = await fetch(
+      const response = await fetch(
         `https://${YAMPI_ALIAS}.yampi.com.br/api/v2/products/${productId}`,
         {
           method: "PUT",
@@ -49,10 +31,10 @@ app.post("/webhook", async (req, res) => {
         }
       );
 
-      const updateData = await updateResponse.json();
-      console.log(`✅ Produto ${productId} atualizado para ${status}`, updateData);
+      const data = await response.json();
+      console.log(`✅ Produto ${productId} atualizado para ${status}`, data);
     } catch (error) {
-      console.error("❌ Erro ao processar webhook:", error);
+      console.error("❌ Erro ao atualizar produto:", error);
     }
   }
 
