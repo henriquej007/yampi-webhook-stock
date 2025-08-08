@@ -8,6 +8,7 @@ const PORT = process.env.PORT || 3000;
 
 // Sua chave de API da Yampi (configure no Render como variável de ambiente)
 const YAMPI_API_KEY = process.env.YAMPI_API_KEY; 
+const YAMPI_ALIAS = process.env.YAMPI_ALIAS;
 
 // Webhook da Yampi
 app.post("/webhook", async (req, res) => {
@@ -26,7 +27,7 @@ app.post("/webhook", async (req, res) => {
       if (quantity === 0) {
         console.log(`⚠ Estoque zerado. Desativando produto ${productId}...`);
 
-        const url = `https://api.yampi.com.br/v2/product/${productId}`;
+        const url = `https://api.dooki.com.br/v2/compra-z/catalog/products/${productId}`;
         const body = JSON.stringify({ active: false });
 
         const response = await fetch(url, {
@@ -65,3 +66,4 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
