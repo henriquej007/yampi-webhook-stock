@@ -1,61 +1,67 @@
-import express from 'express';
-import fetch from 'node-fetch';
+import express from "express";
+import fetch from "node-fetch";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Configura para ler JSON no body
 app.use(express.json());
 
-// Endpoint raiz só para teste rápido
-app.get('/', (req, res) => {
-  res.send('Servidor Yampi Webhook ativo ✅');
-});
+const PORT = process.env.PORT || 3000;
 
-// Endpoint que a Yampi vai chamar
-app.post('/webhook', async (req, res) => {
-  console.log('📦 Webhook recebido:', JSON.stringify(req.body, null, 2));
+// Sua chave de API da Yampi (configure no Render como variável de ambiente)
+const YAMPI_API_KEY = process.env.YAMPI_API_KEY; 
 
+// Webhook da Yampi
+app.post("/webhook", async (req, res) => {
   try {
-    const event = req.body.event;
-    const productData = req.body.resource;
+    console.log("📦 Webhook recebido:", JSON.stringify(req.body, null, 2));
 
-    // Verifica se é evento de atualização de estoque
-    if (event === 'product.inventory.updated') {
-      const productId = productData.id;
-      const quantity = productData.quantity;
+    const { event, resource } = req.body;
+
+    // Só processa eventos de atualização de estoque
+    if (event === "product.inventory.updated") {
+      const productId = resource.id;
+      const quantity = resource.quantity;
 
       console.log(`➡ Estoque do produto ${productId}: ${quantity}`);
 
       if (quantity === 0) {
         console.log(`⚠ Estoque zerado. Desativando produto ${productId}...`);
 
-        const yampiResponse = await fetch(`https://api.yampi.com.br/v1/product/${productId}`, {
-          method: 'PUT',
+        const url = `https://api.yampi.com.br/v2/product/${productId}`;
+        const body = JSON.stringify({ active: false });
+
+        const response = await fetch(url, {
+          method: "PUT",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.YAMPI_TOKEN}` // token no Render ENV
+            "Authorization": `Bearer ${YAMPI_API_KEY}`,
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            active: false
-          })
+          body
         });
 
-        const data = await yampiResponse.json();
-        console.log('📡 Resposta da Yampi:', data);
+        // Verifica se a resposta é JSON
+        const contentType = response.headers.get("content-type");
+        let data;
+        if (contentType && contentType.includes("application/json")) {
+          data = await response.json();
+        } else {
+          data = await response.text();
+        }
+
+        if (!response.ok) {
+          console.error(`❌ Erro ao desativar produto: HTTP ${response.status}`, data);
+        } else {
+          console.log(`✅ Produto ${productId} desativado com sucesso!`, data);
+        }
       }
     }
 
-    // Sempre responde 200 para evitar retries desnecessários
-    res.status(200).send({ status: 'ok' });
-
-  } catch (err) {
-    console.error('❌ Erro ao processar webhook:', err);
-    res.status(500).send({ error: 'erro interno' });
+    res.status(200).send("OK");
+  } catch (error) {
+    console.error("❌ Erro ao processar webhook:", error);
+    res.status(500).send("Erro interno");
   }
 });
 
-// Inicia servidor
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
