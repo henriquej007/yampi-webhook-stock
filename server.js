@@ -1,76 +1,61 @@
-import express from "express";
+import express from 'express';
+import fetch from 'node-fetch';
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Configura para ler JSON no body
 app.use(express.json());
 
-// 🔑 Suas credenciais da Yampi
-const YAMPI_ALIAS = "compra-z"; // ex: "minhaloja"
-const YAMPI_TOKEN = "t6cya7e6PCWZn4GR1G5xjcSXaiKZHgFJvATYIsmR";
-const YAMPI_SECRET = "sk_OWydQm3tFhQtfVZMInTfy8siSUPsUQ7bxzlC3";
+// Endpoint raiz só para teste rápido
+app.get('/', (req, res) => {
+  res.send('Servidor Yampi Webhook ativo ✅');
+});
 
-// Função para buscar dados atuais do produto
-async function getProduct(productId) {
-  const res = await fetch(`https://${YAMPI_ALIAS}.yampi.com.br/api/v3/catalog/products/${productId}`, {
-    headers: {
-      "User-Token": YAMPI_TOKEN,
-      "User-Secret-Key": YAMPI_SECRET
-    }
-  });
+// Endpoint que a Yampi vai chamar
+app.post('/webhook', async (req, res) => {
+  console.log('📦 Webhook recebido:', JSON.stringify(req.body, null, 2));
 
-  if (!res.ok) throw new Error(`Erro ao buscar produto ${productId}`);
-  return await res.json();
-}
-
-// Função para atualizar produto
-async function updateProductActive(productId, active) {
-  // Buscar dados atuais
-  const product = await getProduct(productId);
-
-  // Montar payload obrigatório
-  const body = {
-    simple: product.simple,
-    brand_id: product.brand_id,
-    name: product.name,
-    active: active
-  };
-
-  // Fazer atualização
-  const res = await fetch(`https://${YAMPI_ALIAS}.yampi.com.br/api/v3/catalog/products/${productId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "User-Token": YAMPI_TOKEN,
-      "User-Secret-Key": YAMPI_SECRET
-    },
-    body: JSON.stringify(body)
-  });
-
-  if (!res.ok) throw new Error(`Erro ao atualizar produto ${productId}`);
-  return await res.json();
-}
-
-// 📌 Endpoint para receber webhook da Yampi
-app.post("/webhook", async (req, res) => {
   try {
-    const event = req.body;
+    const event = req.body.event;
+    const productData = req.body.resource;
 
-    // Aqui depende de como a Yampi manda o evento
-    // Vamos supor que ela mande { product_id: 123, stock: 0 }
-    const productId = event.product_id;
-    const stock = event.stock;
+    // Verifica se é evento de atualização de estoque
+    if (event === 'product.inventory.updated') {
+      const productId = productData.id;
+      const quantity = productData.quantity;
 
-    if (stock === 0) {
-      console.log(`Estoque do produto ${productId} zerou. Desativando...`);
-      await updateProductActive(productId, false);
+      console.log(`➡ Estoque do produto ${productId}: ${quantity}`);
+
+      if (quantity === 0) {
+        console.log(`⚠ Estoque zerado. Desativando produto ${productId}...`);
+
+        const yampiResponse = await fetch(`https://api.yampi.com.br/v1/product/${productId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.YAMPI_TOKEN}` // token no Render ENV
+          },
+          body: JSON.stringify({
+            active: false
+          })
+        });
+
+        const data = await yampiResponse.json();
+        console.log('📡 Resposta da Yampi:', data);
+      }
     }
 
-    res.status(200).send({ success: true });
-  } catch (error) {
-    console.error("Erro no webhook:", error);
-    res.status(500).send({ error: error.message });
+    // Sempre responde 200 para evitar retries desnecessários
+    res.status(200).send({ status: 'ok' });
+
+  } catch (err) {
+    console.error('❌ Erro ao processar webhook:', err);
+    res.status(500).send({ error: 'erro interno' });
   }
 });
 
-app.listen(3000, () => {
-  console.log("Servidor rodando na porta 3000");
+// Inicia servidor
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
