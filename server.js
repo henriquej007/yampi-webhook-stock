@@ -33,10 +33,11 @@ app.post("/webhook", async (req, res) => {
         const response = await fetch(url, {
           method: "PUT",
           headers: {
-            "Authorization": `Bearer ${YAMPI_API_KEY}`,
+            "User-Token": 't6cya7e6PCWZn4GR1G5xjcSXaiKZHgFJvATYIsmR',
+            "User-Secret-Key": 'sk_OWydQm3tFhQtfVZMInTfy8siSUPsUQ7bxzlC3',
             "Content-Type": "application/json",
           },
-          body
+          body: '{"active":false}'
         });
 
         // Verifica se a resposta é JSON
@@ -66,4 +67,5 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
 
