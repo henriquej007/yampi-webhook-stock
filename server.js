@@ -1,5 +1,5 @@
-import express from "express";
-import fetch from "node-fetch";
+const express = require("express");
+const axios = require("axios");
 
 const app = express();
 app.use(express.json());
@@ -9,38 +9,45 @@ const YAMPI_TOKEN = process.env.YAMPI_TOKEN;
 const YAMPI_SECRET = process.env.YAMPI_SECRET;
 
 app.post("/webhook", async (req, res) => {
-  console.log("📦 Webhook recebido:", JSON.stringify(req.body, null, 2));
+  try {
+    const data = req.body;
+    const estoque = data.stock;
+    const productId = data.product_id;
 
-  const event = req.body.event;
-  const quantity = req.body.resource?.quantity;
-  const productId = req.body.resource?.id;
+    console.log("Webhook recebido:", data);
 
-  if (event === "product.inventory.updated" && productId) {
-    try {
-      const status = quantity > 0 ? "active" : "inactive";
-
-      const response = await fetch(
-        `https://${YAMPI_ALIAS}.yampi.com.br/api/v2/products/${productId}`,
+    if (estoque === 0) {
+      console.log(`Produto ${productId} sem estoque → Desativando...`);
+      await axios.put(
+        `https://api.yampi.com.br/v2/${YAMPI_ALIAS}/products/${productId}`,
+        { active: false },
         {
-          method: "PUT",
           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${YAMPI_TOKEN}`,
+            "User-Token": YAMPI_TOKEN,
+            "User-Secret-Key": YAMPI_SECRET,
           },
-          body: JSON.stringify({ status }),
         }
       );
-
-      const data = await response.json();
-      console.log(`✅ Produto ${productId} atualizado para ${status}`, data);
-    } catch (error) {
-      console.error("❌ Erro ao atualizar produto:", error);
+    } else if (estoque === 1) {
+      console.log(`Produto ${productId} voltou ao estoque → Ativando...`);
+      await axios.put(
+        `https://api.yampi.com.br/v2/${YAMPI_ALIAS}/products/${productId}`,
+        { active: true },
+        {
+          headers: {
+            "User-Token": YAMPI_TOKEN,
+            "User-Secret-Key": YAMPI_SECRET,
+          },
+        }
+      );
     }
+
+    res.status(200).send("OK");
+  } catch (error) {
+    console.error("Erro:", error.response?.data || error.message);
+    res.status(500).send("Erro interno");
   }
-
-  res.status(200).send("OK");
 });
 
-app.listen(10000, () => {
-  console.log("🚀 Servidor rodando na porta 10000");
-});
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
