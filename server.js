@@ -31,10 +31,10 @@ app.post("/webhook", async (req, res) => {
           simple: true, // ou false, conforme seu produto
           brand_id: resource.brand_id, // vem do webhook
           active: false,
-          name: resource.name // vem do webhook
+          name: spreadsheet.product // vem do webhook
         };
 
-        const url = `https://api.dooki.com.br/v2/compra-z/catalog/products/${productId}`;
+        const url = `https://api.dooki.com.br/v2/compra-z/catalog/products/22842585`;
 
         const response = await fetch(url, {
           method: "PUT",
@@ -69,3 +69,4 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
