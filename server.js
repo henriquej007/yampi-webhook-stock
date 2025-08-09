@@ -17,7 +17,14 @@ app.post("/webhook", async (req, res) => {
     const { event, resource } = req.body;
 
     if (event === "product.inventory.updated") {
-      const sku = resource.sku;
+      const sku = body?.resource?.spreadsheet?.data?.sku;
+
+      // Verifica se foi encontrado o sku com o webhook que chegou
+      if (!sku) {
+        console.error("❌ SKU não encontrado no webhook, abortando.");
+        return;
+      }
+
       const quantity = resource.quantity;
 
       console.log(`➡ Estoque do SKU ${sku}: ${quantity}`);
@@ -49,6 +56,14 @@ app.post("/webhook", async (req, res) => {
       const productName = product.name;
 
       if (quantity === 0) {
+        
+        // Verificar se o sku bate com o recebido pela webhook
+        if (product.sku !== sku) {
+          console.error(`❌ SKU retornado (${product.sku}) não bate com o SKU do webhook (${sku}), abortando.`);
+          return;
+        }
+
+        
         console.log(`⚠ Estoque zerado. Desativando produto ${productId}...`);
 
         const body = {
@@ -93,3 +108,4 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
