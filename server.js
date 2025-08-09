@@ -29,7 +29,7 @@ app.post("/webhook", async (req, res) => {
         // Monta o corpo com TODOS os campos obrigatórios
         const body = {
           simple: true, // ou false, conforme seu produto
-          brand_id: resource.brand_id, // vem do webhook
+          brand_id: 19653058, // vem do webhook
           active: false,
           name: spreadsheet.product // vem do webhook
         };
@@ -69,4 +69,5 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
 
