@@ -1,71 +1,61 @@
 import express from "express";
-import fetch from "node-fetch";
 
 const app = express();
 app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
+const YAMPI_API_KEY = process.env.YAMPI_API_KEY; // User-Token
+const YAMPI_SECRET_KEY = process.env.YAMPI_SECRET_KEY; // User-Secret-Key
+const YAMPI_ALIAS = "SEU_ALIAS"; // exemplo: loja123
 
-// Sua chave de API da Yampi (configure no Render como variável de ambiente)
-const YAMPI_API_KEY = process.env.YAMPI_API_KEY; 
-const YAMPI_ALIAS = process.env.YAMPI_ALIAS;
+// Coloque aqui os valores obrigatórios fixos
+const BRAND_ID = 1; // substitua pelo ID correto da marca
+const SIMPLE = true; // ou false, dependendo do seu produto
 
-// Webhook da Yampi
 app.post("/webhook", async (req, res) => {
   try {
-    console.log("📦 Webhook recebido:", JSON.stringify(req.body, null, 2));
+    const data = req.body;
 
-    const { event, resource } = req.body;
+    // Ajuste conforme a estrutura real do webhook
+    const productId = data.product?.id;
+    const stock = data.product?.stock;
+    const productName = data.product?.name;
 
-    // Só processa eventos de atualização de estoque
-    if (event === "product.inventory.updated") {
-      const productId = resource.id;
-      const quantity = resource.quantity;
+    if (!productId || !productName) {
+      return res.status(400).send("Dados insuficientes no webhook");
+    }
 
-      console.log(`➡ Estoque do produto ${productId}: ${quantity}`);
+    // Se o estoque for zero, desativar produto
+    if (stock === 0) {
+      const body = {
+        simple: SIMPLE,
+        brand_id: BRAND_ID,
+        active: false,
+        name: productName
+      };
 
-      if (quantity === 0) {
-        console.log(`⚠ Estoque zerado. Desativando produto ${productId}...`);
-
-        const url = `https://api.dooki.com.br/v2/compra-z/catalog/products/${productId}`;
-        const body = JSON.stringify({ active: false });
-
-        const response = await fetch(url, {
+      const putResponse = await fetch(
+        `https://api.dooki.com.br/v2/${YAMPI_ALIAS}/catalog/products/${productId}`,
+        {
           method: "PUT",
           headers: {
-            "User-Token": 't6cya7e6PCWZn4GR1G5xjcSXaiKZHgFJvATYIsmR',
-            "User-Secret-Key": 'sk_OWydQm3tFhQtfVZMInTfy8siSUPsUQ7bxzlC3',
-            "Content-Type": "application/json",
+            "User-Token": YAMPI_API_KEY,
+            "User-Secret-Key": YAMPI_SECRET_KEY,
+            "Content-Type": "application/json"
           },
-          body: '{"active":false}'
-        });
-
-        // Verifica se a resposta é JSON
-        const contentType = response.headers.get("content-type");
-        let data;
-        if (contentType && contentType.includes("application/json")) {
-          data = await response.json();
-        } else {
-          data = await response.text();
+          body: JSON.stringify(body)
         }
+      );
 
-        if (!response.ok) {
-          console.error(`❌ Erro ao desativar produto: HTTP ${response.status}`, data);
-        } else {
-          console.log(`✅ Produto ${productId} desativado com sucesso!`, data);
-        }
-      }
+      const result = await putResponse.json();
+      console.log("Resposta da Yampi:", result);
     }
 
     res.status(200).send("OK");
   } catch (error) {
-    console.error("❌ Erro ao processar webhook:", error);
+    console.error("Erro no webhook:", error);
     res.status(500).send("Erro interno");
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando na porta ${PORT}`);
-});
-
-
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
