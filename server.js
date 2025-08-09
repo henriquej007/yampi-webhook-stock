@@ -6,9 +6,10 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
-// Sua chave de API da Yampi (configure no Render como variável de ambiente)
+// Variáveis de ambiente
 const YAMPI_API_KEY = process.env.YAMPI_API_KEY; 
-const YAMPI_ALIAS = process.env.YAMPI_ALIAS;
+const YAMPI_SECRET_KEY = process.env.YAMPI_SECRET_KEY;
+const YAMPI_ALIAS = process.env.YAMPI_ALIAS; // exemplo: "compra-z"
 
 // Webhook da Yampi
 app.post("/webhook", async (req, res) => {
@@ -17,7 +18,6 @@ app.post("/webhook", async (req, res) => {
 
     const { event, resource } = req.body;
 
-    // Só processa eventos de atualização de estoque
     if (event === "product.inventory.updated") {
       const productId = resource.id;
       const quantity = resource.quantity;
@@ -27,32 +27,53 @@ app.post("/webhook", async (req, res) => {
       if (quantity === 0) {
         console.log(`⚠ Estoque zerado. Desativando produto ${productId}...`);
 
-        const url = `https://api.dooki.com.br/v2/compra-z/catalog/products/${productId}`;
-        const body = JSON.stringify({ active: false });
+        // 1️⃣ Buscar dados atuais do produto
+        const getResponse = await fetch(
+          `https://api.yampi.com.br/v1/${YAMPI_ALIAS}/products/${productId}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              "User-Token": YAMPI_API_KEY,
+              "User-Secret-Key": YAMPI_SECRET_KEY
+            }
+          }
+        );
 
-        const response = await fetch(url, {
-          method: "PUT",
-          headers: {
-            "User-Token": 't6cya7e6PCWZn4GR1G5xjcSXaiKZHgFJvATYIsmR',
-            "User-Secret-Key": 'sk_OWydQm3tFhQtfVZMInTfy8siSUPsUQ7bxzlC3',
-            "Content-Type": "application/json",
-          },
-          body: '{"active":false}'
-        });
-
-        // Verifica se a resposta é JSON
-        const contentType = response.headers.get("content-type");
-        let data;
-        if (contentType && contentType.includes("application/json")) {
-          data = await response.json();
-        } else {
-          data = await response.text();
+        if (!getResponse.ok) {
+          console.error(`❌ Erro ao buscar produto: HTTP ${getResponse.status}`);
+          return res.status(500).send("Erro ao buscar produto");
         }
 
-        if (!response.ok) {
-          console.error(`❌ Erro ao desativar produto: HTTP ${response.status}`, data);
+        const productData = await getResponse.json();
+
+        // 2️⃣ Montar body com os campos obrigatórios
+        const body = {
+          simple: "true",
+          brand_id: 1,
+          active: false, // desativando
+          name: productData.name
+        };
+
+        // 3️⃣ Atualizar produto
+        const updateResponse = await fetch(
+          `https://api.yampi.com.br/v1/${YAMPI_ALIAS}/products/${productId}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "User-Token": YAMPI_API_KEY,
+              "User-Secret-Key": YAMPI_SECRET_KEY
+            },
+            body: JSON.stringify(body)
+          }
+        );
+
+        const updateData = await updateResponse.json();
+
+        if (!updateResponse.ok) {
+          console.error(`❌ Erro ao atualizar produto: HTTP ${updateResponse.status}`, updateData);
         } else {
-          console.log(`✅ Produto ${productId} desativado com sucesso!`, data);
+          console.log(`✅ Produto ${productId} desativado com sucesso!`, updateData);
         }
       }
     }
@@ -67,6 +88,3 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
-
-
-
