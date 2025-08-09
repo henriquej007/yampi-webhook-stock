@@ -5,7 +5,7 @@ app.use(express.json());
 
 const YAMPI_API_KEY = process.env.YAMPI_API_KEY; // User-Token
 const YAMPI_SECRET_KEY = process.env.YAMPI_SECRET_KEY; // User-Secret-Key
-const YAMPI_ALIAS = "SEU_ALIAS"; // exemplo: loja123
+const YAMPI_ALIAS = process.env.YAMPI_ALIAS; // exemplo: loja123
 
 // Coloque aqui os valores obrigatórios fixos
 const BRAND_ID = 1; // substitua pelo ID correto da marca
@@ -59,3 +59,4 @@ app.post("/webhook", async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+
