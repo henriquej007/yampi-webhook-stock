@@ -16,43 +16,67 @@ app.post("/webhook", async (req, res) => {
 
     const { event, resource } = req.body;
 
-    // Processa eventos de atualização de estoque
     if (event === "product.inventory.updated") {
-      const productId = resource.id;
+      const sku = resource.sku;
       const quantity = resource.quantity;
 
-      console.log(`➡ Estoque do produto ${productId}: ${quantity}`);
+      console.log(`➡ Estoque do SKU ${sku}: ${quantity}`);
+
+      // Busca o produto pelo SKU
+      const searchUrl = `https://api.dooki.com.br/v2/compra-z/catalog/products?sku=${encodeURIComponent(sku)}`;
+      const searchResp = await fetch(searchUrl, {
+        method: "GET",
+        headers: {
+          "User-Token": YAMPI_API_KEY,
+          "User-Secret-Key": YAMPI_SECRET_KEY,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!searchResp.ok) {
+        const errText = await searchResp.text();
+        throw new Error(`Erro ao buscar produto pelo SKU: ${searchResp.status} - ${errText}`);
+      }
+
+      const searchData = await searchResp.json();
+      if (!searchData || !searchData.data || searchData.data.length === 0) {
+        throw new Error(`Produto com SKU ${sku} não encontrado.`);
+      }
+
+      const product = searchData.data[0];
+      const productId = product.id;
+      const brandId = product.brand_id;
+      const productName = product.name;
 
       if (quantity === 0) {
         console.log(`⚠ Estoque zerado. Desativando produto ${productId}...`);
 
-        // Monta o corpo com TODOS os campos obrigatórios
         const body = {
-          simple: true, // ou false, conforme seu produto
-          brand_id: 19653058, // vem do webhook
+          simple: true,
+          brand_id: brandId,
           active: false,
-          name: "Andrea Pirlo" // vem do webhook
+          name: productName,
         };
 
-        const url = `https://api.dooki.com.br/v2/compra-z/catalog/products/22842585`;
-
-        const response = await fetch(url, {
+        const updateUrl = `https://api.dooki.com.br/v2/compra-z/catalog/products/${productId}`;
+        const updateResp = await fetch(updateUrl, {
           method: "PUT",
           headers: {
             "User-Token": YAMPI_API_KEY,
             "User-Secret-Key": YAMPI_SECRET_KEY,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(body)
+          body: JSON.stringify(body),
         });
 
-        const contentType = response.headers.get("content-type");
-        let data = contentType && contentType.includes("application/json")
-          ? await response.json()
-          : await response.text();
+        const contentType = updateResp.headers.get("content-type");
+        const data =
+          contentType && contentType.includes("application/json")
+            ? await updateResp.json()
+            : await updateResp.text();
 
-        if (!response.ok) {
-          console.error(`❌ Erro ao desativar produto: HTTP ${response.status}`, data);
+        if (!updateResp.ok) {
+          console.error(`❌ Erro ao desativar produto: HTTP ${updateResp.status}`, data);
         } else {
           console.log(`✅ Produto ${productId} desativado com sucesso!`, data);
         }
@@ -69,6 +93,3 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
-
-
-
