@@ -32,6 +32,9 @@ app.post("/webhook", async (req, res) => {
       console.log(`➡ Estoque do SKU ${sku}: ${quantity}`);
 
       
+
+      const skuFromWebhook = req.body.resource.spreadsheet.data.sku;
+      
       // Buscar produtos ativos, sem estoque, incluindo skus e brand
       const productsResponse = await axios.get(
         `https://api.dooki.com.br/v2/compra-z/catalog/products?active=1&quality=with_no_stock&include=skus,brand`,
@@ -46,11 +49,11 @@ app.post("/webhook", async (req, res) => {
 
 
       const productData = productsResponse.data.data.find(p =>
-       p.skus.some(skuObj => skuObj.sku === sku)
+       p.skus.some(skuObj => skuObj.sku === skuFromWebhook)
       );
       
       if (!productData) {
-        console.error(`Produto com SKU ${sku} não encontrado`);
+        console.error(`Produto com SKU ${skuFromWebhook} não encontrado`);
         return;
       }
       
@@ -111,6 +114,7 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
 
 
 
