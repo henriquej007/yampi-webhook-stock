@@ -58,10 +58,10 @@ app.post("/webhook", async (req, res) => {
       if (quantity === 0) {
         
         // Verificar se o sku bate com o recebido pela webhook
-        if (product.sku !== sku) {
+        /*if (product.sku !== sku) {
           console.error(`❌ SKU retornado (${product.sku}) não bate com o SKU do webhook (${sku}), abortando.`);
           return;
-        }
+        }*/
 
         
         console.log(`⚠ Estoque zerado. Desativando produto ${productId}...`);
@@ -108,6 +108,7 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
 
 
 
