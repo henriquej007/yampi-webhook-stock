@@ -37,7 +37,8 @@ app.post("/webhook", async (req, res) => {
         `https://api.dooki.com.br/v2/compra-z/catalog/products?active=1&quality=with_no_stock&include=skus,brand`,
         {
           headers: {
-            Authorization: `Bearer ${process.env.YAMPI_API_KEY}`,
+            "User-Token": YAMPI_API_KEY,
+            "User-Secret-Key": YAMPI_SECRET_KEY,
             'Content-Type': 'application/json'
           }
         }
@@ -110,6 +111,7 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
 
 
 
