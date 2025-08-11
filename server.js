@@ -19,7 +19,9 @@ app.post("/webhook", async (req, res) => {
     const { event, resource } = req.body;
 
     if (event === "product.inventory.updated") {
+      
       const sku = resource.spreadsheet?.data?.sku;
+      const productName = resource.spreadsheet?.data?.product;
 
       // Verifica se foi encontrado o sku com o webhook que chegou
       if (!sku) {
@@ -62,7 +64,6 @@ app.post("/webhook", async (req, res) => {
       
       const productId = productData.id;
       const brandId = productData.brand.id;
-      const productName = productData.brand.id;
       
 
       if (quantity === 0) {
@@ -118,6 +119,7 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
 
 
 
