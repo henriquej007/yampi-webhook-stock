@@ -1,6 +1,6 @@
 import express from "express";
 import fetch from "node-fetch";
-import axios from 'axios';
+const axios = require('axios');
 
 const app = express();
 app.use(express.json());
@@ -109,6 +109,7 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
 
 
 
