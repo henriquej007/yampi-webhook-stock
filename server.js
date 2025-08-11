@@ -29,31 +29,31 @@ app.post("/webhook", async (req, res) => {
 
       console.log(`➡ Estoque do SKU ${sku}: ${quantity}`);
 
-      // Busca o produto pelo SKU
-      const searchUrl = `https://api.dooki.com.br/v2/compra-z/catalog/products?sku=${encodeURIComponent(sku)}`;
-      const searchResp = await fetch(searchUrl, {
-        method: "GET",
-        headers: {
-          "User-Token": YAMPI_API_KEY,
-          "User-Secret-Key": YAMPI_SECRET_KEY,
-          "Content-Type": "application/json",
-        },
-      });
+      
+      // Buscar produtos ativos, sem estoque, incluindo skus e brand
+      const productsResponse = await axios.get(
+        `compra-z/products?active=1&quality=with_no_stock&include=skus,brand`,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.YAMPI_API_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
 
-      if (!searchResp.ok) {
-        const errText = await searchResp.text();
-        throw new Error(`Erro ao buscar produto pelo SKU: ${searchResp.status} - ${errText}`);
+
+      const productData = productsResponse.data.data.find(p =>
+       p.skus.some(skuObj => skuObj.sku === skuFromWebhook)
+      );
+      
+      if (!productData) {
+        console.error(`Produto com SKU ${skuFromWebhook} não encontrado`);
+        return;
       }
-
-      const searchData = await searchResp.json();
-      if (!searchData || !searchData.data || searchData.data.length === 0) {
-        throw new Error(`Produto com SKU ${sku} não encontrado.`);
-      }
-
-      const product = searchData.data[0];
-      const productId = product.id;
-      const brandId = product.brand_id;
-      const productName = product.name;
+      
+      const productId = productData.id;
+      const brandId = productData.brand.id;
+      
 
       if (quantity === 0) {
         
@@ -108,6 +108,7 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
 
 
 
