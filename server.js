@@ -65,7 +65,7 @@ app.post("/webhook", async (req, res) => {
       const productId = productData.id;
       const brandId = productData.brand.id;
       
-
+      // Caso a quantidade em estoque for zero
       if (quantity === 0) {
         
         // Verificar se o sku bate com o recebido pela webhook
@@ -107,6 +107,56 @@ app.post("/webhook", async (req, res) => {
           console.log(`✅ Produto ${productId} desativado com sucesso!`, data);
         }
       }
+
+
+      // Caso a quantidade em estoque for um
+      if (quantity === 1) {
+      // Buscar produtos inativos com apenas 1 unidade em estoque
+      const productsOneStockResponse = await axios.get(
+        `https://api.dooki.com.br/v2/compra-z/catalog/products?active=0&quality=with_one_stock&include=skus,brand`,
+        {
+          headers: {
+            "User-Token": YAMPI_API_KEY,
+            "User-Secret-Key": YAMPI_SECRET_KEY,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+    
+      const productDataOneStock = productsOneStockResponse.data.data.find(p =>
+        Array.isArray(p.skus?.data) &&
+        p.skus.data.some(skuObj => skuObj.sku === skuFromWebhook)
+      );
+    
+      if (productDataOneStock) {
+        const productId = productDataOneStock.id;
+        const brandId = productDataOneStock.brand.id;
+    
+        console.log(`✅ Estoque 1 unidade. Reativando produto ${productId}...`);
+    
+        const body = {
+          simple: true,
+          brand_id: brandId,
+          active: true,
+          name: productName,
+        };
+    
+        const updateUrl = `https://api.dooki.com.br/v2/compra-z/catalog/products/${productId}`;
+        await fetch(updateUrl, {
+          method: "PUT",
+          headers: {
+            "User-Token": YAMPI_API_KEY,
+            "User-Secret-Key": YAMPI_SECRET_KEY,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+      }
+    }
+
+
+
+      
     }
 
     res.status(200).send("OK");
@@ -119,25 +169,3 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
