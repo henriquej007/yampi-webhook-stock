@@ -17,7 +17,7 @@ app.post("/webhook", async (req, res) => {
     const { event, resource } = req.body;
 
     if (event === "product.inventory.updated") {
-      const sku = "andrea-pirlo-milan-y";
+      const sku = spreadsheet.data.sku;
 
       // Verifica se foi encontrado o sku com o webhook que chegou
       if (!sku) {
@@ -108,6 +108,7 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
 
 
 
