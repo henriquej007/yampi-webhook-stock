@@ -48,8 +48,9 @@ app.post("/webhook", async (req, res) => {
       );
 
 
-      const productData = productsResponse.data.data.find(p =>
-       p.skus.some(skuObj => skuObj.sku === skuFromWebhook)
+     const productData = productsResponse.data.data.find(p =>
+        Array.isArray(p.skus?.data) &&
+        p.skus.data.some(skuObj => skuObj.sku === skuFromWebhook)
       );
       
 
@@ -116,6 +117,7 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
 
 
 
