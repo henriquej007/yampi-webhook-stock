@@ -46,11 +46,11 @@ app.post("/webhook", async (req, res) => {
 
 
       const productData = productsResponse.data.data.find(p =>
-       p.skus.some(skuObj => skuObj.sku === skuFromWebhook)
+       p.skus.some(skuObj => skuObj.sku === sku)
       );
       
       if (!productData) {
-        console.error(`Produto com SKU ${skuFromWebhook} não encontrado`);
+        console.error(`Produto com SKU ${sku} não encontrado`);
         return;
       }
       
@@ -111,6 +111,7 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
 
 
 
