@@ -34,7 +34,7 @@ app.post("/webhook", async (req, res) => {
       
       // Buscar produtos ativos, sem estoque, incluindo skus e brand
       const productsResponse = await axios.get(
-        `compra-z/products?active=1&quality=with_no_stock&include=skus,brand`,
+        `https://api.dooki.com.br/v2/compra-z/catalog/products?active=1&quality=with_no_stock&include=skus,brand`,
         {
           headers: {
             Authorization: `Bearer ${process.env.YAMPI_API_KEY}`,
@@ -110,6 +110,7 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
 
 
 
