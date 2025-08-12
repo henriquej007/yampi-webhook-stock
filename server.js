@@ -33,14 +33,9 @@ app.post("/webhook", async (req, res) => {
 
       console.log(`➡ Estoque do SKU ${sku}: ${quantity}`);
 
-      
-
+  
       const skuFromWebhook = req.body.resource.spreadsheet.data.sku;
 
-      
-      
-      const productId = productData.id;
-      const brandId = productData.brand.id;
       
       // Caso a quantidade em estoque for zero
       if (quantity === 0) {
@@ -70,6 +65,11 @@ app.post("/webhook", async (req, res) => {
         console.error(`Produto com SKU ${skuFromWebhook} não encontrado`);
         return;
       }
+
+              
+      const productId = productData.id;
+      const brandId = productData.brand.id;
+      
         
         // Verificar se o sku bate com o recebido pela webhook
         /*if (product.sku !== sku) {
@@ -174,4 +174,5 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
 
