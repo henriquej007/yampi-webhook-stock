@@ -132,7 +132,14 @@ app.post("/webhook", async (req, res) => {
         Array.isArray(p.skus?.data) &&
         p.skus.data.some(skuObj => skuObj.sku === skuFromWebhook)
       );
-    
+
+      
+      if (!productDataOneStock) {
+        console.error(`Produto com SKU ${skuFromWebhook} não encontrado`);
+        return;
+      }
+
+        
       if (productDataOneStock) {
         const productId = productDataOneStock.id;
         const brandId = productDataOneStock.brand.id;
@@ -174,6 +181,7 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
 
 
 
