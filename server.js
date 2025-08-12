@@ -5,7 +5,7 @@ import axios from 'axios';
 
 const app = express();
 app.use(express.json());
-
+//apagar esse comentario
 const PORT = process.env.PORT || 3000;
 
 // Variáveis de ambiente (configure no Render)
@@ -189,6 +189,7 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
 
 
 
