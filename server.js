@@ -112,13 +112,13 @@ app.post("/webhook", async (req, res) => {
       }
 
 
-      // Caso a quantidade em estoque for um
+      // Caso a quantidade em estoque for maior ou igual a um
       if (quantity >= 1) {
 
       
-      // Buscar produtos inativos com apenas 1 unidade em estoque
+      // Buscar produtos inativos com 1 unidade em estoque ou mais
       const productsOneStockResponse = await axios.get(
-        `https://api.dooki.com.br/v2/compra-z/catalog/products?active=0&quality=with_one_stock&include=skus,brand&limit=100`,
+        `https://api.dooki.com.br/v2/compra-z/catalog/products?q=${sku}&include=skus,brand`,
         {
           headers: {
             "User-Token": YAMPI_API_KEY,
@@ -189,6 +189,7 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
 
 
 
