@@ -144,7 +144,9 @@ app.post("/webhook", async (req, res) => {
         const productId = productDataOneStock.id;
         const brandId = productDataOneStock.brand.id;
         const productActive = productDataOneStock.active;
-    
+
+        if (productActive === "false") {
+          
         console.log(`✅ Estoque 1 unidade. Reativando produto ${productId}...`);
     
         const body = {
@@ -164,7 +166,12 @@ app.post("/webhook", async (req, res) => {
           },
           body: JSON.stringify(body),
         });
+
+
+        
       }
+    }
+        
     }
 
 
@@ -182,6 +189,7 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
 
 
 
