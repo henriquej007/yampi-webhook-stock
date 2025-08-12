@@ -113,7 +113,7 @@ app.post("/webhook", async (req, res) => {
 
 
       // Caso a quantidade em estoque for um
-      if (quantity === 1) {
+      if (quantity >= 1) {
 
       
       // Buscar produtos inativos com apenas 1 unidade em estoque
@@ -174,5 +174,6 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
 
 
