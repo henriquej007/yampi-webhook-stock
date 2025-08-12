@@ -2,7 +2,7 @@ import express from "express";
 import fetch from "node-fetch";
 import axios from 'axios';
 
-//teste
+
 const app = express();
 app.use(express.json());
 
@@ -36,7 +36,16 @@ app.post("/webhook", async (req, res) => {
       
 
       const skuFromWebhook = req.body.resource.spreadsheet.data.sku;
+
       
+      
+      const productId = productData.id;
+      const brandId = productData.brand.id;
+      
+      // Caso a quantidade em estoque for zero
+      if (quantity === 0) {
+
+    
       // Buscar produtos ativos, sem estoque, incluindo skus
       const productsResponse = await axios.get(
         `https://api.dooki.com.br/v2/compra-z/catalog/products?active=1&quality=with_no_stock&include=skus,brand`,
@@ -54,19 +63,13 @@ app.post("/webhook", async (req, res) => {
         Array.isArray(p.skus?.data) &&
         p.skus.data.some(skuObj => skuObj.sku === skuFromWebhook)
       );
-      
 
+        
       
       if (!productData) {
         console.error(`Produto com SKU ${skuFromWebhook} não encontrado`);
         return;
       }
-      
-      const productId = productData.id;
-      const brandId = productData.brand.id;
-      
-      // Caso a quantidade em estoque for zero
-      if (quantity === 0) {
         
         // Verificar se o sku bate com o recebido pela webhook
         /*if (product.sku !== sku) {
@@ -111,6 +114,8 @@ app.post("/webhook", async (req, res) => {
 
       // Caso a quantidade em estoque for um
       if (quantity === 1) {
+
+      
       // Buscar produtos inativos com apenas 1 unidade em estoque
       const productsOneStockResponse = await axios.get(
         `https://api.dooki.com.br/v2/compra-z/catalog/products?active=0&quality=with_one_stock&include=skus,brand`,
@@ -169,3 +174,4 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
