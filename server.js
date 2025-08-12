@@ -14,7 +14,7 @@ const YAMPI_SECRET_KEY = process.env.YAMPI_SECRET_KEY;
 
 app.post("/webhook", async (req, res) => {
   try {
-    console.log("📦 Webhook recebido:", JSON.stringify(req.body, null, 2));
+    console.log("📡 Webhook recebido:", JSON.stringify(req.body, null, 2));
 
     const { event, resource } = req.body;
 
@@ -31,7 +31,7 @@ app.post("/webhook", async (req, res) => {
 
       const quantity = resource.quantity;
 
-      console.log(`➡ Estoque do SKU ${sku}: ${quantity}`);
+      console.log(`📦 Estoque do SKU ${sku}: ${quantity}`);
 
   
       const skuFromWebhook = req.body.resource.spreadsheet.data.sku;
@@ -62,7 +62,7 @@ app.post("/webhook", async (req, res) => {
         
       
       if (!productData) {
-        console.error(`Produto com SKU ${skuFromWebhook} não encontrado`);
+        console.error(`⚠️ Produto com SKU ${skuFromWebhook} não encontrado`);
         return;
       }
 
@@ -78,7 +78,7 @@ app.post("/webhook", async (req, res) => {
         }*/
 
         
-        console.log(`⚠ Estoque zerado. Desativando produto ${productId}...`);
+        console.log(`🔄 Estoque zerado. Desativando produto ${productId}...`);
 
         const body = {
           simple: true,
@@ -135,7 +135,7 @@ app.post("/webhook", async (req, res) => {
 
       
       if (!productDataOneStock) {
-        console.error(`Produto com SKU ${skuFromWebhook} não encontrado`);
+        console.error(`⚠️ Produto com SKU ${skuFromWebhook} não encontrado`);
         return;
       }
 
@@ -147,7 +147,7 @@ app.post("/webhook", async (req, res) => {
 
         if (productActive === false) {
           
-        console.log(`✅ Estoque 1 unidade. Reativando produto ${productId}...`);
+        console.log(`✅ Estoque 1 unidade ou mais. Reativando produto ${productId}...`);
     
         const body = {
           simple: true,
@@ -189,6 +189,7 @@ app.post("/webhook", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
 });
+
 
 
 
